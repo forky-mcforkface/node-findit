@@ -42,6 +42,11 @@ If you set `opts.followSymlinks`, symlinks will be followed. Otherwise, a
 If `basedir` is actually a non-directory regular file, findit emits a single
 "file" event for it then emits "end".
 
+## finder.stop()
+
+Stop the traversal. A `"stop"` event will fire and then no more events will
+fire.
+
 # events
 
 ## finder.on('path', function (file, stat) {})
@@ -69,7 +74,12 @@ Every time a symlink is read when `opts.followSymlinks` is on, this event fires.
 
 ## finder.on('end', function () {})
 
-When the recursive walk is complete, this event fires.
+When the recursive walk is complete unless `finder.stop()` was called, this
+event fires.
+
+## finder.on('stop', function () {})
+
+When `finder.stop()` is called, this event fires.
 
 # install
 
