@@ -9,6 +9,10 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     
     if (!emitter) {
         emitter = new EventEmitter;
+        emitter.stop = function () {
+            emitter._stopped = true;
+            emitter.emit('stop');
+        };
         emitter._pending = 0;
         emitter._seen = {};
     }
@@ -24,12 +28,14 @@ module.exports = function walk (dir, opts, emitter, dstat) {
         else check()
     }
     else fs.lstat(dir, function onstat (err, stat) {
+        if (emitter._stopped) return;
         if (err) return finish();
         emitter._seen[stat.ino || dir] = true;
         
         if (stat.isSymbolicLink() && opts.followSymlinks) {
             emitter.emit('link', fdir, stat);
             fs.readlink(dir, function (err, rfile) {
+                if (emitter._stopped) return;
                 if (err) return finish();
                 var file_ = path.resolve(dir, rfile);
                 emitter.emit('readlink', fdir, file_);
@@ -69,6 +75,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     }
     
     function onreaddir (err, files) {
+        if (emitter._stopped) return;
         emitter._pending --;
         if (err) return check();
         
@@ -77,6 +84,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             var file = path.join(fdir, rfile);
             
             fs.lstat(file, function (err, stat) {
+                if (emitter._stopped) return;
                 if (err) check()
                 else onstat(file, stat)
             });
@@ -96,11 +104,13 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             emitter.emit('link', file, stat);
             
             fs.readlink(file, function (err, rfile) {
+                if (emitter._stopped) return;
                 if (err) return check();
                 var file_ = path.resolve(path.dirname(file), rfile);
                 
                 emitter.emit('readlink', file, file_);
                 fs.lstat(file_, function (err, stat_) {
+                    if (emitter._stopped) return;
                     if (err) return check();
                     
                     emitter._pending ++;

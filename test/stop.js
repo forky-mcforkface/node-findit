@@ -5,26 +5,29 @@ var path = require('path');
 test('stop', function (t) {
     t.plan(1);
     
-    var finder = find(__dirname + '/stop');
+    var finder = find(__dirname + '/..');
     var files = [];
+    var stopped = false;
     finder.on('file', function (file) {
-        files.push(path.relative(__dirname, file));
+        files.push(file);
+        if (files.length === 3) {
+            finder.stop();
+            stopped = true;
+        }
+        else if (stopped) {
+            t.fail("files didn't stop");
+        }
     });
     
     finder.on('directory', function (dir, stat, stop) {
-        var d = path.basename(dir);
-        if (d === 'c') stop();
-        else if (d === 'w') stop();
+        if (stopped) t.fail("directories didn't stop");
     });
     
     finder.on('end', function () {
-        t.deepEqual(files.sort(), [
-            'stop/q/x',
-            'stop/q/y',
-            'stop/q/z/m',
-            'stop/q/z/n',
-            'stop/r/a',
-            'stop/r/b'
-        ]);
+        t.fail("shouldn't have ended");
+    });
+    
+    finder.on('stop', function () {
+        t.equal(files.length, 3);
     });
 });
