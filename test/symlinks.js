@@ -62,3 +62,17 @@ test('follow links', function (t) {
         t.end();
     }
 });
+
+test('parent links', function (t) {
+    helper(t, __dirname + '/symlinks', { followSymlinks: true }, done);
+    
+    function done (data) {
+        t.deepEqual(data.symlinks, [
+            'cyclic-link-to-dir1', 'dangling-symlink', 'link-to-dir2',
+            'link-to-file'
+        ]);
+        t.deepEqual(data.files, ['file', 'file1', 'file2']);
+        t.deepEqual(data.dirs, [ 'dir1', 'dir2', 'symlinks' ]);
+        t.end();
+    }
+});
