@@ -2,6 +2,8 @@
 
 Recursively walk directory trees. Think `/usr/bin/find`.
 
+[![build status](https://secure.travis-ci.org/substack/node-findit.png)](http://travis-ci.org/substack/node-findit)
+
 # example
 
 ``` js
