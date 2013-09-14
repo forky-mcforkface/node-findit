@@ -4,6 +4,9 @@ var path = require('path');
 
 module.exports = function walk (dir, opts, emitter, dstat) {
     if (!opts) opts = {};
+    var fdir = opts._original || dir;
+    opts._original = undefined;
+    
     if (!emitter) {
         emitter = new EventEmitter;
         emitter._pending = 0;
@@ -18,42 +21,42 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     
     if (dstat) {
         var stopped = false;
-        emitter.emit('directory', dir, dstat, function stop () {
+        emitter.emit('directory', fdir, dstat, function stop () {
             stopped = true;
         });
-        emitter.emit('path', dir, dstat);
+        emitter.emit('path', fdir, dstat);
         if (!stopped) fs.readdir(dir, onreaddir);
         else check()
     }
     else fs.lstat(dir, function onstat (err, stat) {
         if (err) return emitter.emit('end');
         else if (stat.isSymbolicLink() && opts.followSymlinks) {
-            emitter.emit('link', dir, stat);
+            emitter.emit('link', fdir, stat);
             fs.readlink(dir, function (err, rfile) {
                 if (err) return emitter.emit('end');
                 var file_ = path.resolve(dir, rfile);
                 emitter._seenLink[file_] = true;
-                emitter.emit('readlink', dir, file_);
+                emitter.emit('readlink', fdir, file_);
                 fs.lstat(file_, onstat);
             });
         }
         else if (stat.isSymbolicLink()) {
-            emitter.emit('link', dir, stat);
-            emitter.emit('path', dir, stat);
+            emitter.emit('link', fdir, stat);
+            emitter.emit('path', fdir, stat);
             emitter.emit('end');
         }
         else if (stat.isDirectory()) {
             var stopped = false;
-            emitter.emit('directory', dir, stat, function stop () {
+            emitter.emit('directory', fdir, stat, function stop () {
                 stopped = true;
             });
-            emitter.emit('path', dir, stat);
+            emitter.emit('path', fdir, stat);
             if (!stopped) fs.readdir(dir, onreaddir);
             else check()
         }
         else {
-            emitter.emit('file', dir, stat);
-            emitter.emit('path', dir, stat);
+            emitter.emit('file', fdir, stat);
+            emitter.emit('path', fdir, stat);
             emitter.emit('end');
         }
     });
@@ -74,7 +77,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
         
         files.forEach(function (rfile) {
             emitter._pending ++;
-            var file = path.join(dir, rfile);
+            var file = path.join(fdir, rfile);
             
             fs.lstat(file, function (err, stat) {
                 if (err) check()
@@ -83,8 +86,9 @@ module.exports = function walk (dir, opts, emitter, dstat) {
         });
     }
     
-    function onstat (file, stat) {
+    function onstat (file, stat, original) {
         if (stat.isDirectory()) {
+            if (original) opts._original = original;
             walk(file, opts, emitter, stat);
             check();
         }
@@ -103,7 +107,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
                 fs.lstat(file_, function (err, stat_) {
                     if (err) return check();
                     emitter._pending ++;
-                    onstat(file_, stat_);
+                    onstat(file_, stat_, file);
                     check();
                 });
             });
