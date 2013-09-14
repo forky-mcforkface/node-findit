@@ -8,10 +8,12 @@ module.exports = function walk (dir, opts, emitter, dstat) {
         emitter = new EventEmitter;
         emitter._pending = 0;
         emitter._seenLink = {};
+        emitter._seenFile = {};
     }
     emitter._pending ++;
     emitter.on('end', function () {
         emitter._seenLink = null;
+        emitter._seenFile = null;
     });
     
     if (dstat) {
@@ -87,7 +89,10 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             check();
         }
         else if (stat.isSymbolicLink() && opts.followSymlinks) {
+            if (emitter._seenLink[file]) return check();
+            emitter._seenLink[file] = true;
             emitter.emit('link', file, stat);
+            
             fs.readlink(file, function (err, rfile) {
                 if (err) return check();
                 var file_ = path.resolve(path.dirname(file), rfile);
@@ -109,6 +114,8 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             check();
         }
         else {
+            if (emitter._seenFile[file]) return check();
+            emitter._seenFile[file] = true;
             emitter.emit('file', file, stat);
             emitter.emit('path', file, stat);
             check();
