@@ -1,29 +1,21 @@
-var assert = require('assert');
 var find = require('../');
+var test = require('tap').test;
 
-exports.module = function () {
-    assert.eql(find.findSync, find.find.sync);
-    assert.eql(find, find.find);
-};
-
-exports.file = function () {
-    var to = setTimeout(function () {
-        assert.fail('never ended');
-    }, 5000);
+test('single file', function (t) {
+    t.plan(2);
     
     var finder = find(__filename);
     var files = [];
     finder.on('file', function (file) {
-        assert.equal(file, __filename);
+        t.equal(file, __filename);
         files.push(file);
     });
     
     finder.on('directory', function (dir) {
-        assert.fail(dir);
+        t.fail(dir);
     });
     
     finder.on('end', function () {
-        clearTimeout(to);
-        assert.deepEqual(files, [ __filename ]);
+        t.deepEqual(files, [ __filename ]);
     });
-};
+});
