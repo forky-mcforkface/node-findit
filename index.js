@@ -7,8 +7,12 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     if (!emitter) {
         emitter = new EventEmitter;
         emitter._pending = 0;
+        emitter._seenLink = {};
     }
     emitter._pending ++;
+    emitter.on('end', function () {
+        emitter._seenLink = null;
+    });
     
     if (dstat) {
         var stopped = false;
@@ -19,8 +23,18 @@ module.exports = function walk (dir, opts, emitter, dstat) {
         if (!stopped) fs.readdir(dir, onreaddir);
         else check()
     }
-    else fs.lstat(dir, function (err, stat) {
+    else fs.lstat(dir, function onstat (err, stat) {
         if (err) return emitter.emit('end');
+        else if (stat.isSymbolicLink() && opts.followSymlinks) {
+            emitter.emit('link', dir, stat);
+            fs.readlink(dir, function (err, rfile) {
+                if (err) return emitter.emit('end');
+                var file_ = path.resolve(dir, rfile);
+                emitter._seenLink[file_] = true;
+                emitter.emit('readlink', dir, file_);
+                fs.lstat(file_, onstat);
+            });
+        }
         else if (stat.isSymbolicLink()) {
             emitter.emit('link', dir, stat);
             emitter.emit('path', dir, stat);
@@ -61,19 +75,43 @@ module.exports = function walk (dir, opts, emitter, dstat) {
             var file = path.join(dir, rfile);
             
             fs.lstat(file, function (err, stat) {
-                if (!err && stat.isDirectory()) {
-                    walk(file, opts, emitter, stat);
-                }
-                else if (!err && stat.isSymbolicLink()) {
-                    emitter.emit('link', file, stat);
-                    emitter.emit('path', file, stat);
-                }
-                else if (!err) {
-                    emitter.emit('file', file, stat);
-                    emitter.emit('path', file, stat);
-                }
-                check();
+                if (err) check()
+                else onstat(file, stat)
             });
         });
+    }
+    
+    function onstat (file, stat) {
+        if (stat.isDirectory()) {
+            walk(file, opts, emitter, stat);
+            check();
+        }
+        else if (stat.isSymbolicLink() && opts.followSymlinks) {
+            emitter.emit('link', file, stat);
+            fs.readlink(file, function (err, rfile) {
+                if (err) return check();
+                var file_ = path.resolve(path.dirname(file), rfile);
+                if (emitter._seenLink[file_]) return check();
+                emitter._seenLink[file_] = true;
+                
+                emitter.emit('readlink', file, file_);
+                fs.lstat(file_, function (err, stat_) {
+                    if (err) return check();
+                    emitter._pending ++;
+                    onstat(file_, stat_);
+                    check();
+                });
+            });
+        }
+        else if (stat.isSymbolicLink()) {
+            emitter.emit('link', file, stat);
+            emitter.emit('path', file, stat);
+            check();
+        }
+        else {
+            emitter.emit('file', file, stat);
+            emitter.emit('path', file, stat);
+            check();
+        }
     }
 };

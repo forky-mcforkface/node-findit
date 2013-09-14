@@ -44,7 +44,7 @@ test('links', function (t) {
             'dangling-symlink', 'link-to-dir2', 'link-to-file'
         ]);
         t.deepEqual(data.files, [ 'file1' ]);
-        t.deepEqual(data.dirs, []);
+        t.deepEqual(data.dirs, [ 'dir1' ]);
         t.end();
     }
 });
@@ -58,7 +58,7 @@ test('follow links', function (t) {
             'link-to-file'
         ]);
         t.deepEqual(data.files, ['file', 'file1', 'file2']);
-        t.deepEqual(data.dirs, ['dir1', 'dir2']);
+        t.deepEqual(data.dirs, [ 'dir1', 'link-to-dir2' ]);
         t.end();
     }
 });
