@@ -25,7 +25,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     }
     else fs.lstat(dir, function onstat (err, stat) {
         if (err) return finish();
-        emitter._seen[stat.ino] = true;
+        emitter._seen[stat.ino || dir] = true;
         
         if (stat.isSymbolicLink() && opts.followSymlinks) {
             emitter.emit('link', fdir, stat);
@@ -84,8 +84,8 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     }
     
     function onstat (file, stat, original) {
-        if (emitter._seen[stat.ino]) return check();
-        emitter._seen[stat.ino] = true;
+        if (emitter._seen[stat.ino || file]) return check();
+        emitter._seen[stat.ino || file] = true;
         
         if (stat.isDirectory()) {
             if (original) opts._original = original;
