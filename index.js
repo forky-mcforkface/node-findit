@@ -9,6 +9,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     
     if (!emitter) {
         emitter = new EventEmitter;
+        emitter.setMaxListeners(Infinity);
         emitter._pending = 0;
         emitter._seen = {};
     }
