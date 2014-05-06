@@ -1,6 +1,6 @@
 {
   "name": "findit",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "walk a directory tree recursively with events",
   "main": "index.js",
   "devDependencies": {
