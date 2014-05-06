@@ -1,11 +1,12 @@
 var EventEmitter = require('events').EventEmitter;
-var fs = require('fs');
+var rfs = require('fs');
 var path = require('path');
 
 module.exports = function walk (dir, opts, emitter, dstat) {
     if (!opts) opts = {};
     var fdir = opts._original || dir;
     opts._original = undefined;
+    var fs = opts.fs || rfs;
     
     if (!emitter) {
         emitter = new EventEmitter;
