@@ -42,6 +42,15 @@ If you set `opts.followSymlinks`, symlinks will be followed. Otherwise, a
 If `basedir` is actually a non-directory regular file, findit emits a single
 "file" event for it then emits "end".
 
+You can optionally specify a custom
+[fs](http://nodejs.org/docs/latest/api/fs.html)
+implementation with `opts.fs`. `opts.fs` should implement:
+
+* `opts.fs.readdir(dir, cb)`
+* `opts.fs.lstat(dir, cb)`
+* `opts.fs.readlink(dir, cb)` - optional if your stat objects from
+`opts.fs.lstat` never return true for `stat.isSymbolicLink()`
+
 ## finder.stop()
 
 Stop the traversal. A `"stop"` event will fire and then no more events will
