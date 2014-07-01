@@ -105,7 +105,7 @@ module.exports = function walk (dir, opts, emitter, dstat) {
     
     function finish () {
         emitter.emit('end');
-        emitter._seen = null;
+        emitter._stopped = true;
     }
     
     function onreaddir (dir, err, files) {

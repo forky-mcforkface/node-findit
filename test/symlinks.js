@@ -46,12 +46,7 @@ function helper(t, dir, options, callback) {
 test('links', function (t) {
     helper(t, __dirname + '/symlinks/dir1', { followSymlinks: false }, done);
     function done (data) {
-        t.equal(data.errors.length, 1);
-        t.equal(
-            data.errors[0].path,
-            __dirname + '/symlinks/dir1/dangling-symlink'
-        );
-        
+        t.deepEqual(data.errors, []);
         t.deepEqual(data.symlinks, [
             'dangling-symlink', 'link-to-dir2', 'link-to-file'
         ]);
@@ -65,6 +60,12 @@ test('follow links', function (t) {
     helper(t, __dirname + '/symlinks/dir1', { followSymlinks: true }, done);
     
     function done (data) {
+        t.equal(data.errors.length, 1);
+        t.equal(
+            data.errors[0].path, __dirname
+            + '/symlinks/dir1/does-not-exist'
+        );
+        
         t.deepEqual(data.symlinks, [
             'cyclic-link-to-dir1', 'dangling-symlink', 'link-to-dir2',
             'link-to-file'
