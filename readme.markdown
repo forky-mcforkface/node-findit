@@ -90,6 +90,13 @@ event fires.
 
 When `finder.stop()` is called, this event fires.
 
+## finder.on('error', function (err) {})
+
+Whenever there is an error, this event fires. You can choose to ignore errors or
+stop the traversal using `finder.stop()`.
+
+You can always get the source of the error by checking `err.path`.
+
 # install
 
 With [npm](https://npmjs.org) do:
