@@ -7,6 +7,6 @@ test('error', function (t) {
     
     var finder = find(__dirname + '/does/not/exist');
     finder.on('error', function (err) {
-        t.ok(true);
+        t.equal(err.filename, __dirname + '/does/not/exist');
     });
 });
